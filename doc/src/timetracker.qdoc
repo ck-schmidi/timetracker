@@ -96,8 +96,9 @@
     for encapsulating all our model/database logic.
 
     In our \c Database component we need to create a database-connection to our \c LocalStorage
-    (will be done in the \init() function). We also hold two models: \c projectModel for managing
-    projects and trackModel for managing our timetrackings.
+    (will be done in the \init() function). The result of the connection is saved in the local
+    property db. We also hold two models: \c projectModel for managing projects and trackModel
+    for managing our timetrackings.
 
     For every model we also need some extra logic for handling the model <-> database logic
 
@@ -108,6 +109,8 @@
        \li \c{remove(index)}: \i(removes an item from the model by given index}
        \li \c{save(index)}: \i{saves an item from the model by given index)
     \endlist
+
+    The base structure of this component should look like:
 
     \code
 
@@ -143,7 +146,33 @@
 
     \endcode
 
+    Now we get into the individual functions. Let's start with the \c{init()}-function.
+    In this function we need to do following things:
 
+    \list
+        \li \l{set up database connection}
+        \li \l{create database-structure (only on first startup)}
+    \endlist
+
+    For setting up our database connection we use the function \c{openDataBaseSync(…)} from
+    the LocalStorage QML-componentAfter setting the connection up, we execute the create-statement
+    for our database. You should use the 'IF NOT EXISTS'-clause on the create-statements, then the
+    statement is only executed on the first startup of the application.
+
+    \code
+
+    function init(){
+        db = LocalStorage.openDatabaseSync("TimeTrackingDB", "1.0", "Timetracking Database", 100000);
+        db.transaction( function(tx) {
+            tx.executeSql('CREATE TABLE IF NOT EXISTS PROJECT(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT)')
+            tx.executeSql('CREATE TABLE IF NOT EXISTS TRACK(id INTEGER PRIMARY KEY AUTOINCREMENT, comment TEXT, projectid INTEGER, start DATETIME, end DATETIME)')
+        });
+    }
+
+    \endcode
+
+    If we \b{Build and Run} our application after implementing the \c{init}-function and doesn't
+    get any error, the connection succeeded and the database and it tables were created.
 
 
 */

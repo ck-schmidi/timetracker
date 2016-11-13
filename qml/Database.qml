@@ -6,13 +6,20 @@ Item {
     //holds the current database Connections
     property var db
 
-
     //qml-listmodel representing or datastructures
     property ListModel projectModel: ListModel{}
     property ListModel trackModel: ListModel{}
 
     function init(){
+        //creates the connection to our LocalStorage-database
+        db = LocalStorage.openDatabaseSync("TimeTrackingDB", "1.0", "Timetracking Database", 100000);
 
+        /* we always execute the create table statements with the addon 'IF NOT EXISTS', so they just gets created
+          on the first application startup */
+        db.transaction( function(tx) {
+            tx.executeSql('CREATE TABLE IF NOT EXISTS PROJECT(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT)')
+            tx.executeSql('CREATE TABLE IF NOT EXISTS TRACK(id INTEGER PRIMARY KEY AUTOINCREMENT, comment TEXT, projectid INTEGER, start DATETIME, end DATETIME)')
+        });
     }
 
     //holds all the model-functionality for projectModel
