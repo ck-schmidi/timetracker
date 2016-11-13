@@ -1,0 +1,5 @@
+outputdir   = html
+
+exampledirs = src
+
+imagedirs   = images
