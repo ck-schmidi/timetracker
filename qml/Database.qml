@@ -26,12 +26,35 @@ Item {
     property var projectDao : QtObject{
         //populates projectModel from database
         function populate(){
-
+            //if database is not initialized -> return false
+            if(!db){
+                return false;
+            }
+            //otherwise we execute the sql-statement, iterate all results and add them to projectModel
+            db.transaction(function(tx){
+                var result = tx.executeSql('SELECT * FROM PROJECT')
+                for(var i = 0; i < result.rows.length; i++){
+                    var item = result.rows.item(i)
+                    projectModel.append({"rowId": parseInt(item.id), "name": item.name, "description": item.description})
+                }
+            });
+            return true;
         }
 
         //append new project to projectModel
         function append(project){
-
+            /*if any of the properties name or description is not defined
+              we change the to empty strings before inserting them to the
+              database */
+            project.name = project.name !== undefined ? project.name : ""
+            project.description = project.description !== undefined ? project.description: ""
+            db.transaction( function(tx) {
+                var res = tx.executeSql('INSERT INTO PROJECT (name, description) VALUES(?, ?)', [project.name, project.description])
+                //change rowId before inserting to model
+                project.rowId = parseInt(res.insertId)
+            })
+            projectModel.append(project)
+            return projectModel.count - 1
         }
 
         //remove project in projectModel by given index

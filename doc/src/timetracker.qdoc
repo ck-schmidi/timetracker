@@ -104,10 +104,10 @@
 
     In this case we have to Daos (DataAccessObjects) which have following functions:
     \list
-       \li \c{populate}: \i{populates the model from database}
-       \li \c{append(item)}: \i{appends an new item to the model}
-       \li \c{remove(index)}: \i(removes an item from the model by given index}
-       \li \c{save(index)}: \i{(saves an item from the model by given index)}
+       \li \c{populate}: \e{populates the model from database}
+       \li \c{append(item)}: \e{appends an new item to the model}
+       \li \c{remove(index)}: \e(removes an item from the model by given index}
+       \li \c{save(index)}: \e{(saves an item from the model by given index)}
     \endlist
 
     The base structure of this component should look like:
@@ -172,7 +172,57 @@
     \endcode
 
     If we \b{Build and Run} our application after implementing the \c{init}-function and doesn't
-    get any error, the connection succeeded and the database and it tables were created.
+    get any error, the connection succeeded and the database and its tables were created.
+
+
+    Now let's implement the playerDao and let's start with the \c{populate}-function:
+
+    \list
+        \li \l{We first check, if we our db property has a value. if not -> return false}
+        \li \l{If we have a valid database-connection we start a transaction}
+        \li \l{In this transaction we execute the statement 'SELECT * FROM PROJECT' which returns all entries in table PROJECT}
+        \li \l{In the next step we iterate the result-set of this statement and add the project to our projectModel}
+    \endlist
+
+    As you can see, we also save us the \c rowId of the database-entry, so we can identify our project-item for updates and
+    deletions. We use the javascript \c{parseInt} function for converting the id from the database to an int-value.
+
+    \code
+    function populate(){
+        if(!db){ return false; }
+
+        db.transaction(function(tx){
+            var result = tx.executeSql('SELECT * FROM PROJECT')
+            for(var i = 0; i < result.rows.length; i++){
+                var item = result.rows.item(i)
+                projectModel.append({"rowId": parseInt(item.id), "name": item.name, "description": item.description})
+            }
+        });
+        return true;
+    }
+    \endcode
+
+    In the next step we will take a look on the \c{append}-function:
+
+    \list
+        \li \l{For continuity we reset our name and description properties to an empty string, if they are undefined}
+        \li \l{In the next step we execute an INSERT-statement with our project-properties name and description}
+        \li \l{After the execution of the statement we save the retured rowId from the database and add the item to our model}
+    \endlist
+
+    \code
+    function append(project){
+        project.name = project.name !== undefined ? project.name : ""
+        project.description = project.description !== undefined ? project.description: ""
+        db.transaction( function(tx) {
+            var res = tx.executeSql('INSERT INTO PROJECT (name, description) VALUES(?, ?)', [project.name, project.description])
+            //change rowId before inserting to model
+            project.rowId = parseInt(res.insertId)
+        })
+        projectModel.append(project)
+        return projectModel.count - 1
+    }
+    \endcode
 
 
 */
