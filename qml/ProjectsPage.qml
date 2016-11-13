@@ -2,6 +2,8 @@ import VPlay 2.0
 import VPlayApps 1.0
 import QtQuick 2.7
 
+import "components"
+
 ListPage {
     title: qsTr("Projects")
 
@@ -51,14 +53,8 @@ ListPage {
                     onTextChanged: saveTimer.restart()
                 }
 
-                AppButton{
+                DeleteButton{
                     id: deleteButton
-
-                    text: qsTr("delete")
-                    icon: IconType.remove
-                    backgroundColor: "red"
-                    backgroundColorPressed: "purple"
-
                     onClicked: {
                         InputDialog.confirm(app,
                            qsTr("Really wanna delete project %1?".arg(project.name)),

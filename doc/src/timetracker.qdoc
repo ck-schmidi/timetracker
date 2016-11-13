@@ -269,7 +269,77 @@
     }
     \endcode
 
-    # todo: add instructions for trackDao (maybe some simple instructions whats different from projectDao, otherwise its too much similarity)
+
+   The DAO-Code for the trackDao is pretty similar to the projectModel.
+   I'll outline the main differences, but I won't go into every function explicitly.
+
+   The main difference to the projectModel is, that we have to care about the
+   relationship between the track and the project.
+
+   \list
+       \li \l {In the function populate() we also save the projectRowId as our foreign-key}
+   \endlist
+
+    \code
+
+    //holds all the model-functionality for trackModel
+    property var trackDao: QtObject{
+        function populate(){
+            if(!db){ return false; }
+            db.transaction(function(tx){
+                var result = tx.executeSql('SELECT * FROM TRACK')
+                for(var i = 0; i < result.rows.length; i++){
+                    var item = result.rows.item(i)
+                    trackModel.append({"rowId": parseInt(item.id),
+                                       "comment": item.comment,
+                                       "projectRowId": item.projectid,
+                                       "start": item.start,
+                                       "end": item.end})
+                }
+            });
+            return true;
+        }
+
+        //append new track to trackModel
+        function append(track){
+            track.comment = track.comment !== undefined ? track.comment : ""
+            track.start = Date.now()
+            track.projectRowId = track.projectRowId !== undefined ? track.projectRowId : ""
+            var res
+            db.transaction( function(tx) {
+                res = tx.executeSql('INSERT INTO TRACK(comment, start) VALUES(?, ?)', [track.comment, track.start])
+                track.rowId = parseInt(res.insertId)
+            })
+            trackModel.append(track)
+            return trackModel.count - 1
+        }
+
+        function remove(modelIndex){
+            var track = trackModel.get(modelIndex)
+            var success
+            db.transaction( function(tx) {
+                var res = tx.executeSql('DELETE FROM TRACK WHERE id = ?', [track.rowId])
+                success = res.rowsAffected > 0
+            })
+            if(!success) { return success; }
+            trackModel.remove(modelIndex)
+            return success
+        }
+
+        function save(modelIndex){
+            var track = trackModel.get(modelIndex)
+            var success
+            db.transaction(function(tx){
+                var res = tx.executeSql('UPDATE TRACK SET comment = ?, start = ?, end = ?, projectid = ? WHERE id = ?',
+                                        [track.comment, track.start, track.end, track.projectRowId])
+                success = res.rowsAffected > 0
+            });
+            return success
+        }
+    }
+
+
+    \endcode
 
 
     \section1 First Screen ProjectPage
@@ -550,8 +620,21 @@
     \endcode
 
     Our last task for the Project-Detail-View is adding a delete button:
-    We use the \c{AppButton} component from V-Play-Apps with a remove-icon
-    and text "delete" and some appropriate colors.
+
+    In this case we create a new folder components with a new QML-Component-File
+    \c{DeleteButton.qml} which encapsulates our DeleteButton. We use the \c{AppButton}
+    component from V-Play-Apps with a remove-icon and text "delete" and some appropriate
+    colors.
+
+    \code
+    AppButton{
+        id: deleteButton
+        text: qsTr("delete")
+        icon: IconType.remove
+        backgroundColor: "red"
+        backgroundColorPressed: "purple"
+    }
+    \endcode
 
     Similar to the text creating we again use the \c{InputDialog} component
     for creating an Dialog. In this case we just want to confirm the deletion.
@@ -560,14 +643,8 @@
     \code
             Column{
                 ...
-                AppButton{
+                DeleteButton{
                     id: deleteButton
-
-                    text: qsTr("delete")
-                    icon: IconType.remove
-                    backgroundColor: "red"
-                    backgroundColorPressed: "purple"
-
                     onClicked: {
                         InputDialog.confirm(app,
                            qsTr("Really wanna delete project %1?".arg(project.name)),
