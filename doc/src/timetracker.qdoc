@@ -24,4 +24,54 @@
     \b{at.codekitchen.timetracker}. Interface orientation can be let to \b{Auto}.
     Choose your prefered source code management tool in the next screen and click
     \b{Finish}
+
+    \section1 Structure
+    We will provide the following top-level navigation-structure
+    \list
+       \li \l{Projects}
+       \li \l{Tracking}
+       \li \l{Reports}
+    \endlist
+
+    So we want to end up with something like this:
+
+    # add screenshot
+
+    Now, let's dive into some code. Open the file \c{qml/Main.qml}
+
+    For top-level navigation we use the V-Play component \c Navigation. \c Navigation is
+    renders platform-specific, for example if you are on Android it renders a Drawer-based
+    navigation. In iOS its a tab-based navigation.
+
+    So lets build up our top-level UI-Structure by removing whats currently inside \c App
+    and add a \c Navigation component with 3x \c NavigationItem as its children for each
+    Navigation Entry. \c NavigationItem can be parameterized with a title and an icon. For
+    the icons we use the V-Play compontent IconType for getting nice FontAwesome icons.
+
+    \code
+    import VPlayApps 1.0
+
+    App {
+        Navigation {
+            NavigationItem {
+                title: qsTr("Trackings")
+                icon: IconType.list
+            }
+
+            NavigationItem {
+                title: qsTr("Projects")
+                icon: IconType.trello
+            }
+
+            NavigationItem{
+                title: qsTr("Reports")
+                icon: IconType.file
+            }
+        }
+    }
+    \endcode
+
+    If we \b {Build an Run} or project we should see the top-level-navigation of our
+    application.
+
 */
