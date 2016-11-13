@@ -460,6 +460,127 @@
 
     \endcode
 
-    Now lets extend our DetailView for editing and deleting the project:
+    Now lets extend our DetailView for editing the project:
+
+    In the first step we add a \c{Column} container for providing all our labels and textfields:
+
+    We use the VPlay-App components \c{AppText} and \c{AppTextField} for the labels and textfields:
+
+    \code
+    Component {
+        id: detailView
+        Page {
+            ...
+            Column{
+                spacing: dp(5)
+                topPadding: dp(15)
+                padding: dp(5)
+
+                AppText{
+                    id: projectNameLabel
+                    text: qsTr("Project Name:")
+                    font.pixelSize: sp(10)
+                    color: "grey"
+                }
+
+                AppTextField{
+                    id: projectNameTextField
+                    text:  project ? project.name : ""
+                }
+
+                AppText{
+                    id: projectDescriptionLabel
+                    text: qsTr("Project Description:")
+                    font.pixelSize: sp(10)
+                    color: "grey"
+                }
+
+                AppTextField{
+                    id: projectDescriptionTextField
+                    text:  project ? project.description: ""
+                }
+            }
+            ...
+    \endcode
+
+    After that change, our DetailView shows the correct informations from the database, but
+    editing still doesn't work correctly
+
+    We have to add the Bindings for 2-way-property binding (see: \link{http://imaginativethinking.ca/bi-directional-data-binding-qt-quick/})
+    and we add a timer for saving our changes (not too often ;))
+
+    \code
+        Binding{
+            target: project
+            property: "name"
+            value: projectNameTextField.text
+        }
+
+        Binding{
+            target: project
+            property: "description"
+            value: projectDescriptionTextField.text
+        }
+
+        Timer{
+            id: saveTimer
+            interval: 500
+            running: false
+            repeat: false
+            onTriggered: database.projectDao.save(projectIndex)
+        }
+    \endcode
+
+    we need to call this functions when our texts in the textfields gets changed
+
+    \code
+
+    AppTextField{
+        id: projectNameTextField
+        ...
+        onTextChanged: saveTimer.restart()
+    }
+
+    AppTextField{
+        id: projectDescriptionTextField
+        ...
+        onTextChanged: saveTimer.restart()
+    }
+
+    \endcode
+
+    Our last task for the Project-Detail-View is adding a delete button:
+    We use the \c{AppButton} component from V-Play-Apps with a remove-icon
+    and text "delete" and some appropriate colors.
+
+    Similar to the text creating we again use the \c{InputDialog} component
+    for creating an Dialog. In this case we just want to confirm the deletion.
+    If the user confirms the deletion, we use our model-functions to remove it
+
+    \code
+            Column{
+                ...
+                AppButton{
+                    id: deleteButton
+
+                    text: qsTr("delete")
+                    icon: IconType.remove
+                    backgroundColor: "red"
+                    backgroundColorPressed: "purple"
+
+                    onClicked: {
+                        InputDialog.confirm(app,
+                           qsTr("Really wanna delete project %1?".arg(project.name)),
+                           function (ok) {
+                               if (!ok) { return; }
+                               database.projectDao.remove(page.projectIndex)
+                               navigationStack.pop()
+                           })
+                    }
+                }
+            }
+    \endcode
+
+
 
 */
