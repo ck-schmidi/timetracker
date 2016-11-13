@@ -74,4 +74,26 @@
     If we \b {Build an Run} or project we should see the top-level-navigation of our
     application.
 
+
+    \section1 Database
+    Before we get into programming our different screens, we should talk about the datastructures
+    we use in our program.
+
+    We have a simple data structure:
+
+    \code
+                                          +-------------------+
+        +-------------------+             | Track             |
+        | Project           |             +-------------------+
+        +-------------------+             |# comment          |
+        |# name             |             |# from             |
+        |# description      <-------------+# to               |
+        +-------------------+             +-------------------+
+    \endcode
+
+    We want to organize projects and we want to have timetrackings (track) which can be
+    assigned to one of this projects.
+
+
+
 */
