@@ -224,5 +224,49 @@
     }
     \endcode
 
+    Now lets implement the remove function:
+
+    \list
+        \li \l{The remove-function takes the modelIndex as a parameter, so we take our project from the model with the given index}
+        \li \l{In the next step again open a database-transaction and execute the DELETE-statement}
+        \li \l{For checking the success of the delete-statement we check the rowsAffected property on our statement-result}
+        \li \l{If the deletion was successful, we remove the given project from our model and return true, otherwise we return false}
+    \endlist
+
+    \code
+    function remove(modelIndex){
+        var project = projectModel.get(modelIndex)
+        var success
+        db.transaction( function(tx) {
+            var res = tx.executeSql('DELETE FROM PROJECT WHERE id = ?', [project.rowId])
+            success = res.rowsAffected > 0
+        })
+
+        if(!success) { return false; }
+        projectModel.remove(modelIndex)
+        return true
+    }
+    \endcode
+
+
+    In the last step of the \c{projectDao} implementation we implement to \c{save} function.
+
+    \list
+        \li \l{similar to the remove-function we first get the project from the model with the given index}
+        \li \l{In the next step we open a new database-transaction and execute the UPDATE-statement}
+        \li \l{If res.rowsAffected > 0, we return true, otherwise we return false}
+    \endlist
+
+    \code
+    function save(modelIndex){
+        var project = projectModel.get(modelIndex)
+        var success
+        db.transaction(function(tx){
+            var res = tx.executeSql('UPDATE PROJECT SET name = ?, description = ? WHERE id = ?', [project.name, project.description, project.rowId])
+            success = res.rowsAffected > 0
+        });
+        return success
+    }
+    \endcode
 
 */

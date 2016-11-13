@@ -59,13 +59,41 @@ Item {
 
         //remove project in projectModel by given index
         function remove(modelIndex){
+            //get project by index
+            var project = projectModel.get(modelIndex)
 
+            /*execute the delete-statement with the rowId
+              if the property rowsAffected == 0, the deletion
+              was not successful, in this case we set the success
+              variable to false */
+            var success
+            db.transaction( function(tx) {
+                var res = tx.executeSql('DELETE FROM PROJECT WHERE id = ?', [project.rowId])
+                success = res.rowsAffected > 0
+            })
+
+            //if deletion was not successful, return false
+            if(!success)
+                return false
+
+            //if deletion worked fine -> remove the item from local projectModel + return true
+            projectModel.remove(modelIndex)
+            return true
         }
 
-        //remove project in database by given index
+        //saves project in database by given index
         //(project is already in the model)
         function save(modelIndex){
-
+            //get project by index
+            var project = projectModel.get(modelIndex)
+            var success
+            /* execute the update-statement with the name, description
+              for the item's rowId. return true, if the statement was executed successfully */
+            db.transaction(function(tx){
+                var res = tx.executeSql('UPDATE PROJECT SET name = ?, description = ? WHERE id = ?', [project.name, project.description, project.rowId])
+                success = res.rowsAffected > 0
+            });
+            return success
         }
     }
 
