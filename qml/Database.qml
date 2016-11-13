@@ -96,29 +96,86 @@ Item {
             });
             return success
         }
+
+        function getProjectByRowId(rowId){
+            for(var i = 0; i < projectModel.count; i++){
+                var project = projectModel.get(i)
+                if(project.rowId === rowId)
+                    return project
+            }
+            return undefined
+        }
     }
 
     //holds all the model-functionality for trackModel
     property var trackDao: QtObject{
         //populates trackModel from database
         function populate(){
-
+            //if database is not initialized -> return false
+            if(!db){
+                return false;
+            }
+            //otherwise we execute the sql-statement, iterate all results and add them trackModel
+            db.transaction(function(tx){
+                var result = tx.executeSql('SELECT * FROM TRACK')
+                for(var i = 0; i < result.rows.length; i++){
+                    var item = result.rows.item(i)
+                    trackModel.append({"rowId": parseInt(item.id),
+                                       "comment": item.comment,
+                                       "projectRowId": item.projectid,
+                                       "start": item.start,
+                                       "end": item.end})
+                }
+            });
+            return true;
         }
 
         //append new track to trackModel
         function append(track){
-
+            //set comment to empty string if its null
+            track.comment = track.comment !== undefined ? track.comment : ""
+            //set the starttime to the current date
+            track.start = Date.now()
+            track.projectRowId = track.projectRowId !== undefined ? track.projectRowId : ""
+            var res
+            db.transaction( function(tx) {
+                res = tx.executeSql('INSERT INTO TRACK(comment, start) VALUES(?, ?)', [track.comment, track.start])
+                track.rowId = parseInt(res.insertId)
+            })
+            trackModel.append(track)
+            return trackModel.count - 1
         }
 
         //remove track in trackModel by given index
         function remove(modelIndex){
+            //get track by Index
+            var track = trackModel.get(modelIndex)
 
+            var success
+            db.transaction( function(tx) {
+                var res = tx.executeSql('DELETE FROM TRACK WHERE id = ?', [track.rowId])
+                success = res.rowsAffected > 0
+            })
+
+            if(!success)
+                return success
+
+            trackModel.remove(modelIndex)
+            return success
         }
 
         //remove track in database by given index
         //(track is already in the model)
         function save(modelIndex){
-
+            //get track by index
+            var track = trackModel.get(modelIndex)
+            var success
+            db.transaction(function(tx){
+                var res = tx.executeSql('UPDATE TRACK SET comment = ?, start = ?, end = ?, projectid = ? WHERE id = ?',
+                                        [track.comment, track.start, track.end, track.projectRowId])
+                success = res.rowsAffected > 0
+            });
+            return success
         }
     }
 

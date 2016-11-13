@@ -28,9 +28,9 @@
     \section1 Structure
     We will provide the following top-level navigation-structure
     \list
-       \li \l{Projects}
-       \li \l{Tracking}
-       \li \l{Reports}
+       \li Projects
+       \li Tracking
+       \li Reports
     \endlist
 
     So we want to end up with something like this:
@@ -150,8 +150,8 @@
     In this function we need to do following things:
 
     \list
-        \li \l{set up database connection}
-        \li \l{create database-structure (only on first startup)}
+        \li {set up database connection}
+        \li {create database-structure (only on first startup)}
     \endlist
 
     For setting up our database connection we use the function \c{openDataBaseSync(…)} from
@@ -178,10 +178,10 @@
     Now let's implement the playerDao and let's start with the \c{populate}-function:
 
     \list
-        \li \l{We first check, if we our db property has a value. if not -> return false}
-        \li \l{If we have a valid database-connection we start a transaction}
-        \li \l{In this transaction we execute the statement 'SELECT * FROM PROJECT' which returns all entries in table PROJECT}
-        \li \l{In the next step we iterate the result-set of this statement and add the project to our projectModel}
+        \li {We first check, if we our db property has a value. if not -> return false}
+        \li {If we have a valid database-connection we start a transaction}
+        \li {In this transaction we execute the statement 'SELECT * FROM PROJECT' which returns all entries in table PROJECT}
+        \li {In the next step we iterate the result-set of this statement and add the project to our projectModel}
     \endlist
 
     As you can see, we also save us the \c rowId of the database-entry, so we can identify our project-item for updates and
@@ -205,9 +205,9 @@
     In the next step we will take a look on the \c{append}-function:
 
     \list
-        \li \l{For continuity we reset our name and description properties to an empty string, if they are undefined}
-        \li \l{In the next step we execute an INSERT-statement with our project-properties name and description}
-        \li \l{After the execution of the statement we save the retured rowId from the database and add the item to our model}
+        \li {For continuity we reset our name and description properties to an empty string, if they are undefined}
+        \li {In the next step we execute an INSERT-statement with our project-properties name and description}
+        \li {After the execution of the statement we save the retured rowId from the database and add the item to our model}
     \endlist
 
     \code
@@ -227,10 +227,10 @@
     Now lets implement the remove function:
 
     \list
-        \li \l{The remove-function takes the modelIndex as a parameter, so we take our project from the model with the given index}
-        \li \l{In the next step again open a database-transaction and execute the DELETE-statement}
-        \li \l{For checking the success of the delete-statement we check the rowsAffected property on our statement-result}
-        \li \l{If the deletion was successful, we remove the given project from our model and return true, otherwise we return false}
+        \li {The remove-function takes the modelIndex as a parameter, so we take our project from the model with the given index}
+        \li {In the next step again open a database-transaction and execute the DELETE-statement}
+        \li {For checking the success of the delete-statement we check the rowsAffected property on our statement-result}
+        \li {If the deletion was successful, we remove the given project from our model and return true, otherwise we return false}
     \endlist
 
     \code
@@ -252,9 +252,9 @@
     In the last step of the \c{projectDao} implementation we implement to \c{save} function.
 
     \list
-        \li \l{similar to the remove-function we first get the project from the model with the given index}
-        \li \l{In the next step we open a new database-transaction and execute the UPDATE-statement}
-        \li \l{If res.rowsAffected > 0, we return true, otherwise we return false}
+        \li {similar to the remove-function we first get the project from the model with the given index}
+        \li {In the next step we open a new database-transaction and execute the UPDATE-statement}
+        \li {If res.rowsAffected > 0, we return true, otherwise we return false}
     \endlist
 
     \code
@@ -277,7 +277,7 @@
    relationship between the track and the project.
 
    \list
-       \li \l {In the function populate() we also save the projectRowId as our foreign-key}
+       \li {In the function populate() we also save the projectRowId as our foreign-key}
    \endlist
 
     \code
@@ -342,7 +342,7 @@
     \endcode
 
 
-    \section1 First Screen ProjectPage
+    \section1 Screen ProjectPage
 
     We want to have a screen, where we can Add, Modify and Delete projects.
     When we go to the screen it should look like:
@@ -576,7 +576,7 @@
     After that change, our DetailView shows the correct informations from the database, but
     editing still doesn't work correctly
 
-    We have to add the Bindings for 2-way-property binding (see: \link{http://imaginativethinking.ca/bi-directional-data-binding-qt-quick/})
+    We have to add the Bindings for 2-way-property binding (see: \l{http://imaginativethinking.ca/bi-directional-data-binding-qt-quick/})
     and we add a timer for saving our changes (not too often ;))
 
     \code
@@ -656,6 +656,106 @@
                     }
                 }
             }
+    \endcode
+
+    Now we are done with the ProjectView.
+
+    \section1 Screen TrackingsPage
+
+    \c{TrackingPage} is pretty similar to \c{ProjectPage}. It contains a \c{ListView} with
+    all trackings, an Add-Button and a DetailView.
+
+    Let's create a QML-component \c{TrackingsPage.qml}
+
+    Again, I won't go too much into the details, because its very similar to the ProjectPage.
+    Instead of opening a Dialog when clicking the "+"-Button, we directly append a new track
+    to the model and switch to the DetailView for editing.
+
+
+    # todo: explain getProjectByRowId(...)
+
+    \code
+
+    ListPage{
+        id: trackingsPage
+        title: qsTr("Trackings")
+
+        Component{
+            id: detailView
+            Page{
+                title: qsTr("Detail View")
+            }
+        }
+
+        rightBarItem: IconButtonBarItem {
+            icon: IconType.plus
+            onClicked: {
+                appListView.switchTo(database.trackDao.append({comment: ""}))
+            }
+        }
+
+        AppListView{
+            id: appListView
+            model: database.trackModel
+
+            delegate: SimpleRow {
+                text: "Project: %1".arg(database.projectDao.getProjectByRowId(model.projectRowId))
+                detailText: "%1 (%2)".arg(Helpers.formatDate(model.start)).arg(model.comment)
+                onSelected: appListView.switchTo(index)
+            }
+
+            function switchTo(index) {
+                navigationStack.push(detailView, { projectIndex: index })
+            }
+        }
+    }
+
+    \endcode
+
+    In our \c{SimpleRow} delegate we use a helper-function formatDate(...) which we put in a new file \c{helpers.js}
+    This function does the formatting of your date.
+
+    \code
+
+    .pragma library
+
+    function formatDate(dt)
+    {
+        dt = new Date(dt);
+
+        var formattedDate = '%1.%2.%3 | %4:%5'
+        .arg(padLeft(dt.getDate(), '0', 2))
+        .arg(padLeft(dt.getMonth() + 1, '0', 2))
+        .arg(dt.getFullYear())
+        .arg(padLeft(dt.getHours(), '0', 2))
+        .arg(padLeft(dt.getMinutes(), '0', 2))
+
+        return formattedDate
+    }
+
+    function padLeft(str, ch, width)
+    {
+        var s = String(str);
+
+        while (s.length < width)
+        s = ch + s;
+
+        return s;
+    }
+
+    \endcode
+
+
+    Now we can use the \c{TrackingsPage} in \c{Main.qml}
+
+    \code
+    Navigation {
+        NavigationItem {
+            ...
+            NavigationStack{
+                TrackingsPage{}
+            }
+        }
     \endcode
 
 

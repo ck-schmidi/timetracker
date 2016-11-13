@@ -11,6 +11,9 @@ App {
         NavigationItem {
             title: qsTr("Trackings")
             icon: IconType.list
+            NavigationStack{
+                TrackingsPage{}
+            }
         }
 
         NavigationItem {
