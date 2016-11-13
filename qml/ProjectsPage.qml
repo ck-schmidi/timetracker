@@ -15,7 +15,7 @@ ListPage {
         id: detailView
         Page {
             id: page
-            title: "Detail View"
+            title: qsTr("Detail View")
 
             property int projectIndex
             property var project: database.projectModel.get(projectIndex)
@@ -34,7 +34,7 @@ ListPage {
                                             if (!ok || text === "") {
                                                 return
                                             }
-                                            database.projectDao.append({"name": text, "description": ""})
+                                            appListView.switchTo(database.projectDao.append({"name": text, "description": ""}))
                                         })
     }
 
@@ -54,6 +54,11 @@ ListPage {
         delegate: SimpleRow {
             text: name
             detailText: description
+            onSelected: appListView.switchTo(index)
+        }
+
+        function switchTo(index) {
+            navigationStack.push(detailView, { projectIndex: index })
         }
     }
 }

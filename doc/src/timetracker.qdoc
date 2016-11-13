@@ -404,4 +404,62 @@
 
     Now we are able to create new projects by clicking the "+"-Button and filling the LineEdit.
 
+    In the next step we implement a DetailScreen for our ListView.
+
+    For this purpose we create a new component inside our \c{ProjectPage}
+    The component holds a page with the title 'Detail View'
+
+    We add two properties \c{projectIndex} + \c{project}.
+    \c{projectIndex} is used as parameter for the DetailView
+
+    \code
+
+    ListPage {
+        ...
+        Component {
+        id: detailView
+            Page {
+                id: page
+                title: qsTr("Detail View")
+
+                property int projectIndex
+                property var project: database.projectModel.get(projectIndex)
+            }
+        }
+        ...
+    \endcode
+
+    For using this component we have to extend our implementation of our \c{AppListView}
+    We add a function \c{switchTo(index)} for pushing our detailView to our navigationStack
+    and use it in our \c{SimpleRow}-delegate
+
+    \code
+    AppListView {
+        ...
+        delegate: SimpleRow {
+            ...
+            onSelected: appListView.switchTo(index)
+        }
+        ...
+        function switchTo(index) {
+            navigationStack.push(detailView, { projectIndex: index })
+        }
+        ...
+    \endcode
+
+    We can also change our \c{createNewProject} function to switch to the detail-screen
+    after creating the new project
+
+    \code
+
+    function createNewProject(){
+        ...
+                                            appListView.switchTo(database.projectDao.append({"name": text, "description": ""}))
+        ...
+    }
+
+    \endcode
+
+    Now lets extend our DetailView for editing and deleting the project:
+
 */
