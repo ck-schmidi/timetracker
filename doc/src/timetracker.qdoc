@@ -3,4 +3,25 @@
     \title Simple Timetracker Tutorial
     \brief Demonstrates how to use V-Play to build a timetracking application
 
+    This tutorial will show you how to use V-Play-Apps and QtQuick for creating
+    a simple timetracking application.
+
+    \section1 Goal
+    The goal of this tutorial is creating a data-based mobile app. We want to have the
+    possibility to add and configure projects, where we can then add timetrackings. We
+    want to persist this data in a local storage. For this purpose we will use
+    \b {Qt Quick Local Storage}. \b{Qt Quick Local Storage} uses a local sqlite database
+    for saving the data. The tutorial will also cover how navigation between
+    different screens in V-Play-Apps works. We will also build some new controls, like
+    a timepicker which is used for selecting a time.
+
+    \section1 Let's get started
+    For creating a new V-Play-App we go to \b{File -> New File Or Project} and then
+    select \b{Empty Application} in section \b{Project/V-Play Apps}. Select a appropriate
+    project-name (I chose \b{timetracking}) and click \b{Next}. Choose the latest
+    installed Qt-Version and click \b{Next}. In the next screen you have to enter the app
+    display name and the app-identifier. I chose \b{Timetracker} and
+    \b{at.codekitchen.timetracker}. Interface orientation can be let to \b{Auto}.
+    Choose your prefered source code management tool in the next screen and click
+    \b{Finish}
 */
