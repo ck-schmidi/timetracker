@@ -269,4 +269,139 @@
     }
     \endcode
 
+    # todo: add instructions for trackDao (maybe some simple instructions whats different from projectDao, otherwise its too much similarity)
+
+
+    \section1 First Screen ProjectPage
+
+    We want to have a screen, where we can Add, Modify and Delete projects.
+    When we go to the screen it should look like:
+
+    # todo insert screenshot
+    Let's create an empty QML-Component \c{ProjectsPage.qml} for our visual implementation.
+
+    After creating the new qml-file lets use it in our \c{Main.qml} component within a \c{NavigationStack} (needed
+    for our Detail-Page)
+
+    \code
+        ...
+
+        NavigationItem {
+            title: qsTr("Projects")
+            icon: IconType.trello
+
+            NavigationStack{
+                ProjectsPage{}
+            }
+        }
+        ...
+
+    \endcode
+
+    Now lets dive into \c{ProjectPage.qml}
+
+    Our toplevel-component is a \c{ListPage} where we set the title to 'Projects'
+
+    \code
+
+    ListPage {
+        title: qsTr("Projects")
+        ...
+    }
+
+    \endcode
+
+
+    For adding new projects we add a "+" - Button to the rightBarItem
+
+    \code
+    ListPage{
+        ...
+        rightBarItem: IconButtonBarItem {
+            icon: IconType.plus
+        }
+        ...
+    \endcode
+
+
+    Now we need a \c{ListView} for showing our entries from the database.
+
+    Let's add a \c{AppListView}, which provides a nice device-independent \c{ListView}
+
+    \c{AppListView} takes our database.projectModel as a model and we use the \c{SimpleRow}
+    delegate for displaying our data (text should be the (project)name, detailText
+    the (project)description)
+
+    \code
+
+    ListPage{
+        ...
+        AppListView {
+            id: appListView
+            model: database.projectModel
+            delegate: SimpleRow {
+                text: name
+                detailText: description
+            }
+        }
+        ...
+    \endcode
+
+
+    For using our database we need to instantiate it in global scope (\c{Main.qml})
+    In this step we also add the \c{id} app (we will need this later)
+
+    \code
+    App {
+        id: app
+
+        Database{
+            id: database
+        }
+        ...
+
+    \endcode
+
+    After this step we are able to show project-entries from the model (database)
+
+    In the next step we want to provide functionality for adding new projects.
+
+    So, let's add a function which opens a Dialog with a TextField for entering the
+    name of the new project.
+
+    \c{InputDialog} is a V-Play Component which provides single and multiline
+    InputDialogs. In this case we one need a singleline input so we use the function
+    \c{inputTextSingleLine}. It takes the topel-level app, a title, a placeholder-text
+    and a callback-function, where we can handle the users actions and inputs.
+
+    In the callback-function we check if "Cancel" was pressed (!ok) or the input-text
+    is empty. If one of these conditions is true, we return and do nothing
+
+    Otherwise we call our \c{projectDao.append(...)} function.
+
+    \code
+    function createNewProject(){
+        InputDialog.inputTextSingleLine(app,
+                                        qsTr("Create new Project"),
+                                        qsTr("Project Name"),
+                                        function (ok, text) {
+                                            if (!ok || text === "") {
+                                                return
+                                            }
+                                            database.projectDao.append({"name": text, "description": "")
+                                        })
+    }
+    \endcode
+
+    Let's use this function on our rightBarItem in the onClicked event-handler:
+
+    \code
+    rightBarItem: IconButtonBarItem {
+        ...
+        onClicked: createNewProject()
+    }
+    \endcode
+
+    Now we are able to create new projects by clicking the "+"-Button and filling the LineEdit.
+
 */
