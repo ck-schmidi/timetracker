@@ -107,7 +107,7 @@
        \li \c{populate}: \i{populates the model from database}
        \li \c{append(item)}: \i{appends an new item to the model}
        \li \c{remove(index)}: \i(removes an item from the model by given index}
-       \li \c{save(index)}: \i{saves an item from the model by given index)
+       \li \c{save(index)}: \i{(saves an item from the model by given index)}
     \endlist
 
     The base structure of this component should look like:
