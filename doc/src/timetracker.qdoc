@@ -92,7 +92,57 @@
     \endcode
 
     We want to organize projects and we want to have timetrackings (track) which can be
-    assigned to one of this projects.
+    assigned to one of this projects. So lets create a new qml-file \c{qml/Database.qml}
+    for encapsulating all our model/database logic.
+
+    In our \c Database component we need to create a database-connection to our \c LocalStorage
+    (will be done in the \init() function). We also hold two models: \c projectModel for managing
+    projects and trackModel for managing our timetrackings.
+
+    For every model we also need some extra logic for handling the model <-> database logic
+
+    In this case we have to Daos (DataAccessObjects) which have following functions:
+    \list
+       \li \c{populate}: \i{populates the model from database}
+       \li \c{append(item)}: \i{appends an new item to the model}
+       \li \c{remove(index)}: \i(removes an item from the model by given index}
+       \li \c{save(index)}: \i{saves an item from the model by given index)
+    \endlist
+
+    \code
+
+    Item {
+        id: database
+        property var db
+
+        property ListModel projectModel: ListModel{}
+        property ListModel trackModel: ListModel{}
+
+        function init(){}
+
+        property var projectDao : QtObject{
+            function populate(){}
+            function append(project){}
+            function remove(modelIndex){}
+            function save(modelIndex){}
+        }
+
+        property var trackDao: QtObject{
+            function populate(){}
+            function append(track){}
+            function remove(modelIndex){}
+            function save(modelIndex){}
+        }
+
+        Component.onCompleted: {
+            database.init()
+            database.projectDao.populate()
+            database.trackDao.populate()
+        }
+    }
+
+    \endcode
+
 
 
 
