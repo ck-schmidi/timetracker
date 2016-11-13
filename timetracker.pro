@@ -34,6 +34,9 @@ ios {
     OTHER_FILES += $$QMAKE_INFO_PLIST
 }
 
+# docs
+OTHER_FILES += doc/src/timetracker.qdoc
+
 # set application icons for win and macx
 win32 {
     RC_FILE += win/app_icon.rc
