@@ -96,7 +96,7 @@
     for encapsulating all our model/database logic.
 
     In our \c Database component we need to create a database-connection to our \c LocalStorage
-    (will be done in the \init() function). The result of the connection is saved in the local
+    (will be done in the \c{init} function). The result of the connection is saved in the local
     property db. We also hold two models: \c projectModel for managing projects and trackModel
     for managing our timetrackings.
 
@@ -150,8 +150,8 @@
     In this function we need to do following things:
 
     \list
-        \li {set up database connection}
-        \li {create database-structure (only on first startup)}
+        \li set up database connection
+        \li create database-structure (only on first startup)
     \endlist
 
     For setting up our database connection we use the function \c{openDataBaseSync(…)} from
@@ -178,10 +178,10 @@
     Now let's implement the playerDao and let's start with the \c{populate}-function:
 
     \list
-        \li {We first check, if we our db property has a value. if not -> return false}
-        \li {If we have a valid database-connection we start a transaction}
-        \li {In this transaction we execute the statement 'SELECT * FROM PROJECT' which returns all entries in table PROJECT}
-        \li {In the next step we iterate the result-set of this statement and add the project to our projectModel}
+        \li We first check, if we our db property has a value. if not -> return false
+        \li If we have a valid database-connection we start a transaction
+        \li In this transaction we execute the statement 'SELECT * FROM PROJECT' which returns all entries in table PROJECT
+        \li In the next step we iterate the result-set of this statement and add the project to our projectModel
     \endlist
 
     As you can see, we also save us the \c rowId of the database-entry, so we can identify our project-item for updates and
@@ -205,9 +205,9 @@
     In the next step we will take a look on the \c{append}-function:
 
     \list
-        \li {For continuity we reset our name and description properties to an empty string, if they are undefined}
-        \li {In the next step we execute an INSERT-statement with our project-properties name and description}
-        \li {After the execution of the statement we save the retured rowId from the database and add the item to our model}
+        \li For continuity we reset our name and description properties to an empty string, if they are undefined
+        \li In the next step we execute an INSERT-statement with our project-properties name and description
+        \li After the execution of the statement we save the retured rowId from the database and add the item to our model
     \endlist
 
     \code
@@ -227,10 +227,10 @@
     Now lets implement the remove function:
 
     \list
-        \li {The remove-function takes the modelIndex as a parameter, so we take our project from the model with the given index}
-        \li {In the next step again open a database-transaction and execute the DELETE-statement}
-        \li {For checking the success of the delete-statement we check the rowsAffected property on our statement-result}
-        \li {If the deletion was successful, we remove the given project from our model and return true, otherwise we return false}
+        \li The remove-function takes the modelIndex as a parameter, so we take our project from the model with the given index
+        \li In the next step again open a database-transaction and execute the DELETE-statement
+        \li For checking the success of the delete-statement we check the rowsAffected property on our statement-result
+        \li If the deletion was successful, we remove the given project from our model and return true, otherwise we return false
     \endlist
 
     \code
@@ -252,9 +252,9 @@
     In the last step of the \c{projectDao} implementation we implement to \c{save} function.
 
     \list
-        \li {similar to the remove-function we first get the project from the model with the given index}
-        \li {In the next step we open a new database-transaction and execute the UPDATE-statement}
-        \li {If res.rowsAffected > 0, we return true, otherwise we return false}
+        \li similar to the remove-function we first get the project from the model with the given index
+        \li In the next step we open a new database-transaction and execute the UPDATE-statement
+        \li If res.rowsAffected > 0, we return true, otherwise we return false
     \endlist
 
     \code
@@ -342,7 +342,7 @@
     \endcode
 
 
-    \section1 Screen ProjectPage
+    \section1 Screen ProjectsPage
 
     We want to have a screen, where we can Add, Modify and Delete projects.
     When we go to the screen it should look like:
@@ -368,7 +368,7 @@
 
     \endcode
 
-    Now lets dive into \c{ProjectPage.qml}
+    Now lets dive into \c{ProjectsPage.qml}
 
     Our toplevel-component is a \c{ListPage} where we set the title to 'Projects'
 
@@ -476,7 +476,7 @@
 
     In the next step we implement a DetailScreen for our ListView.
 
-    For this purpose we create a new component inside our \c{ProjectPage}
+    For this purpose we create a new component inside our \c{ProjectsPage}
     The component holds a page with the title 'Detail View'
 
     We add two properties \c{projectIndex} + \c{project}.
@@ -662,12 +662,12 @@
 
     \section1 Screen TrackingsPage
 
-    \c{TrackingPage} is pretty similar to \c{ProjectPage}. It contains a \c{ListView} with
+    \c{TrackingsPage} is pretty similar to \c{ProjectsPage}. It contains a \c{ListView} with
     all trackings, an Add-Button and a DetailView.
 
     Let's create a QML-component \c{TrackingsPage.qml}
 
-    Again, I won't go too much into the details, because its very similar to the ProjectPage.
+    Again, I won't go too much into the details, because its very similar to the ProjectsPage.
     Instead of opening a Dialog when clicking the "+"-Button, we directly append a new track
     to the model and switch to the DetailView for editing.
 
@@ -723,7 +723,7 @@
     {
         dt = new Date(dt);
 
-        var formattedDate = '%1.%2.%3 | %4:%5'
+        var formattedDate = '%1.%2.%3 %4:%5'
         .arg(padLeft(dt.getDate(), '0', 2))
         .arg(padLeft(dt.getMonth() + 1, '0', 2))
         .arg(dt.getFullYear())
@@ -757,6 +757,91 @@
             }
         }
     \endcode
+
+    In the next step we will create some components, which we will later on need for
+    our TrackingsPage. We will start with the TimePicker.
+
+    Let's create a new file \c{TimePicker.qml} in the folder components.
+
+    The implementation of \c{TimePicker.qml} is pretty straight-forward
+
+    \list
+        \li As top-level component we choose Item
+        \li Lets add a property visibleItem for configuring how many items  should be shown in the tumbler-list
+        \li Create a Text-Component for our Tumbler-delegate which cares about the styling of the single text-line
+        \li Add a row with 2 Tumblers (one for hours, one four minutes) + identify them by setting an id
+        \li Lets add the property aliases currentHours and currentMinutes to our Tumblers curent index
+        \li For simpler usage we provide a new signal anyValueChanged which is fired by onCurrentHoursChanged and onCurrentMinutesChanged
+    \endlist
+
+    \code
+    import VPlay 2.0
+    import QtQuick 2.7
+    import QtQuick.Controls 2.0
+
+    Item{
+        height: dp(100)
+        width: row.width
+
+        property int visibleItems: 3
+        property alias currentHours: hourTumbler.currentIndex
+        property alias currentMinutes: minutesTumbler.currentIndex
+
+        signal anyValueChanged
+
+        onCurrentHoursChanged: anyValueChanged()
+        onCurrentMinutesChanged: anyValueChanged()
+
+        Component{
+            id: tumblerDelegate
+            Text{
+                text: {
+                    if(modelData < 10)
+                        return "0" + modelData
+                    return modelData
+                }
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                font.pixelSize: dp(20)
+                opacity: 1.0 - Math.abs(Tumbler.displacement) / (visibleItems / 2)
+            }
+        }
+
+        Row{
+            id: row
+            Tumbler {
+                id: hourTumbler
+                width: dp(50)
+                model: 24
+                delegate: tumblerDelegate
+            }
+            Tumbler {
+                id: minutesTumbler
+                width: dp(50)
+                model: 60
+                delegate: tumblerDelegate
+            }
+        }
+    }
+    \endcode
+
+    Another component we will probably need at some more points will be a \c{AppTextFieldLabel} which
+    is used for labeling controls on the screens.
+
+    We just set \c{font.pixelSize} and \c{color} to some appropriate values.
+
+    \code
+
+    import VPlayApps 1.0
+    import QtQuick 2.0
+
+    AppText{
+        font.pixelSize: sp(10)
+        color: "grey"
+    }
+
+    \endcode
+
 
 
 
