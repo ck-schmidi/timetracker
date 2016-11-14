@@ -684,6 +684,8 @@
             id: detailView
             Page{
                 title: qsTr("Detail View")
+                property int trackIndex
+                property var track: database.trackModel.get(trackIndex)
             }
         }
 
@@ -705,7 +707,7 @@
             }
 
             function switchTo(index) {
-                navigationStack.push(detailView, { projectIndex: index })
+                navigationStack.push(detailView, {trackingIndex: index })
             }
         }
     }
@@ -842,7 +844,224 @@
 
     \endcode
 
+    Now let' complete our \c{TrackingPage}. First of all, we will add a new Component inside our \c{ListPage}
+
+    \list
+        \li We use a page with gets parameterized with 2 values: date and callback
+        \li date is the date/time we want to show and edit
+        \li callback is the function which is called which callback(date), when the date/time gets changed by the user
+        \li For this purpose we have the function returnDate which creates the date and calls the callback-function
+        \li We have a column with a QtQuick1 Calender and our own Component TimePicker inside a Flickable for a better overflow-behaviour
+        \li In the function Component.onCompleted we initilize our Component after dynamic loading
+    \endlist
+
+    \code
+    ...
+
+    Component{
+        id: dateTimePickerView
+
+        Page{
+            id: page
+            title: qsTr("Pick Date and Time")
+
+            property var date
+            property var callback
+
+            function returnDate(){
+                var date = calendar.selectedDate
+                date.setHours(timePicker.currentHours)
+                date.setMinutes(timePicker.currentMinutes)
+                callback(date)
+            }
+
+            Flickable{
+                anchors.fill: parent
+                contentHeight: col.height
+                interactive: contentHeight > col.heightd
+
+                Column{
+                    id: col
+                    padding: dp(15)
+                    spacing: padding
+                    anchors.left: parent.left
+                    anchors.right: parent.right
 
 
+                    QQC1.Calendar{
+                        id: calendar
+                        width: col.width / 4 * 3
+                        height: width
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        onSelectedDateChanged: page.returnDate()
+                    }
+
+                    TimePicker{
+                        id: timePicker
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        onAnyValueChanged: page.returnDate()
+                    }
+                }
+            }
+
+            Component.onCompleted: {
+                var date = page.date
+                if(date.getTime() === 0){
+                    date = new Date(Date.now())
+                }
+
+                calendar.selectedDate = date
+                timePicker.currentHours = date.getHours()
+                timePicker.currentMinutes = date.getMinutes()
+            }
+        }
+    }
+    ...
+
+    \endcode
+
+    Now we have a working screen for choosing date and time, so lets change our DetailView
+    and use the new component.
+
+    Now lets add some new code to our detailView:
+
+    \list
+        \li We also need a Column for aranging our Labels, Combobox,...
+        \li Lets add the TextLabels, ComboBox, TextFields, DeleteButton to our Column
+        \li Delete-Button-behaviour is pretty similar to the ProjectsPage
+        \li Similar to dateTimePickerView we also uses a more imperative logic in this case
+        \li We have a function updateDateTimeTexts() which updates our textfields with the set dates
+        \li In Component.onCompleted we initialize our screen (update start/end-text + update combobox-value)
+        \li For ComboBox we use the onCurrentIndexChanged eventHandler for updating our model after change
+        \li We put some MouseAreas over the AppTextFields to prevent changing the text directly, instead we switch to the DateTimePickerView
+    \endlist
+
+    \code
+    Component{
+        ...
+        Page{
+            ...
+            Column{
+                id: col
+                spacing: dp(5)
+                topPadding: dp(15)
+                padding: dp(5)
+                anchors.fill: parent
+
+                AppTextFieldLabel{
+                    id: projectComboBoxLabel
+                    text: qsTr("Project:")
+                    width: col.width - 2 * col.spacing
+                }
+
+                QQC2.ComboBox{
+                    id: projectComboBox
+                    textRole: "name"
+                    model: database.projectModel
+                    width: col.width - 2 * col.spacing
+                    currentIndex: -1
+
+                    onCurrentIndexChanged: {
+                        if(currentIndex < 0) {return;}
+                        page.track.projectRowId = database.projectModel.get(currentIndex).rowId
+                        database.trackDao.save(page.trackIndex)
+                    }
+                }
+
+                AppTextFieldLabel{
+                    id: startTextLabel
+                    text: qsTr("Start Time")
+                    width: col.width - 2 * col.spacing
+                }
+
+                AppTextField{
+                    id: startText
+                    width: col.width - 2 * col.spacing
+                    MouseArea{
+                        anchors.fill: parent
+                        onClicked: appListView.switchToDateTimePickerView(track.start, function(date){
+                            page.track.start = date
+                            database.trackDao.save(page.trackIndex)
+                            page.updateDateTimeTexts()
+                        });
+                    }
+                }
+
+                AppTextFieldLabel{
+                    id: endTextLabel
+                    text: qsTr("End Time")
+                    width: col.width - 2 * col.spacing
+                }
+
+                AppTextField{
+                    id: endText
+                    width: col.width - 2 * col.spacing
+                    MouseArea{
+                        anchors.fill: parent
+                        onClicked: appListView.switchToDateTimePickerView(track.end, function(date){
+                            page.track.end = date
+                            database.trackDao.save(page.trackIndex)
+                            page.updateDateTimeTexts()
+                        });
+                    }
+                }
+
+                DeleteButton{
+                    id: deleteButton
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    onClicked: {
+                        InputDialog.confirm(app,
+                           qsTr("Really wanna delete this timetracking?"),
+                           function (ok) {
+                               if (!ok) { return; }
+                               database.trackDao.remove(page.trackIndex)
+                               navigationStack.pop()
+                           })
+                    }
+                }
+
+            }
+
+            function updateDateTimeTexts(){
+                if(!page.track){ return; }
+                startText.text = page.track ? Helpers.formatDate(page.track.start) : ""
+                endText.text = page.track ? Helpers.formatDate(page.track.end): ""
+            }
+
+            Component.onCompleted: {
+                if(!page.track){ return; }
+                updateDateTimeTexts()
+                var index = database.projectDao.getIndexByRowId(page.track.projectRowId)
+                projectComboBox.currentIndex = index
+            }
+        }
+    }
+    \endcode
+
+
+    For switching to our new component DateTimePickerView we need some more functionality in our
+    ListPage. Similar to switchTo(...) we now provide a function \c{switchToDateTimePickerView}
+    for switching to our DateTimePickerView. We also do some changes on our text Property of \c{SimpleRow}
+    We just return the project.name, if we can find a related project
+
+    \code
+
+    AppListView{
+        ...
+        delegate: SimpleRow {
+            text: {
+                var project = database.projectDao.getProjectByRowId(model.projectRowId)
+                if(!project){ return "";}
+                return "Project: %1".arg(project.name)
+            }
+            ...
+        }
+
+        function switchToDateTimePickerView(date, callback){
+            navigationStack.push(dateTimePickerView, {date: date, callback: callback})
+        }
+    }
+
+    \endcode
 
 */
