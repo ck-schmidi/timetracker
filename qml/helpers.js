@@ -2,9 +2,13 @@
 
 function formatDate(dt)
 {
+    if(dt.getTime() === 0){
+        return ""
+    }
+
     dt = new Date(dt);
 
-    var formattedDate = '%1.%2.%3 | %4:%5'
+    var formattedDate = '%1.%2.%3 %4:%5'
         .arg(padLeft(dt.getDate(), '0', 2))
         .arg(padLeft(dt.getMonth() + 1, '0', 2))
         .arg(dt.getFullYear())
