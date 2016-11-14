@@ -5,6 +5,7 @@ import QtQuick 2.7
 import "components"
 
 ListPage {
+    id: projectsPage
     title: qsTr("Projects")
 
     /* The DetailView components hold the detail project-page
@@ -23,38 +24,41 @@ ListPage {
             property var project: database.projectModel.get(projectIndex)
 
             Column{
+                id: col
                 spacing: dp(5)
                 topPadding: dp(15)
                 padding: dp(5)
+                anchors.fill: parent
 
-                AppText{
+                AppTextFieldLabel{
                     id: projectNameLabel
                     text: qsTr("Project Name:")
-                    font.pixelSize: sp(10)
-                    color: "grey"
+                    width: col.width - 2 * col.spacing
                 }
 
                 AppTextField{
                     id: projectNameTextField
                     text:  project ? project.name : ""
+                    width: col.width - 2 * col.spacing
                     onTextChanged: saveTimer.restart()
                 }
 
-                AppText{
+                AppTextFieldLabel{
                     id: projectDescriptionLabel
                     text: qsTr("Project Description:")
-                    font.pixelSize: sp(10)
-                    color: "grey"
+                    width: col.width - 2 * col.spacing
                 }
 
                 AppTextField{
                     id: projectDescriptionTextField
                     text:  project ? project.description: ""
+                    width: col.width - 2 * col.spacing
                     onTextChanged: saveTimer.restart()
                 }
 
                 DeleteButton{
                     id: deleteButton
+                    anchors.horizontalCenter: parent.horizontalCenter
                     onClicked: {
                         InputDialog.confirm(app,
                            qsTr("Really wanna delete project %1?".arg(project.name)),
