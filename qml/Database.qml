@@ -98,13 +98,21 @@ Item {
         }
 
         function getProjectByRowId(rowId){
+            var index = getIndexByRowId(rowId)
+            if(index === -1)
+                return undefined;
+            return projectModel.get(index)
+        }
+
+        function getIndexByRowId(rowId){
             for(var i = 0; i < projectModel.count; i++){
                 var project = projectModel.get(i)
                 if(project.rowId === rowId)
-                    return project
+                    return i
             }
-            return undefined
+            return -1
         }
+
     }
 
     //holds all the model-functionality for trackModel
@@ -117,14 +125,14 @@ Item {
             }
             //otherwise we execute the sql-statement, iterate all results and add them trackModel
             db.transaction(function(tx){
-                var result = tx.executeSql('SELECT * FROM TRACK')
+                var result = tx.executeSql('SELECT * FROM TRACK ORDER BY ROWID DESC')
                 for(var i = 0; i < result.rows.length; i++){
                     var item = result.rows.item(i)
                     trackModel.append({"rowId": parseInt(item.id),
                                        "comment": item.comment,
-                                       "projectRowId": item.projectid,
-                                       "start": item.start,
-                                       "end": item.end})
+                                       "projectRowId": parseInt(item.projectid),
+                                       "start": new Date(item.start),
+                                       "end": new Date(item.end)})
                 }
             });
             return true;
@@ -135,15 +143,17 @@ Item {
             //set comment to empty string if its null
             track.comment = track.comment !== undefined ? track.comment : ""
             //set the starttime to the current date
-            track.start = Date.now()
-            track.projectRowId = track.projectRowId !== undefined ? track.projectRowId : ""
+            track.start = new Date(Date.now())
+            track.end = new Date(0)
+            track.projectRowId = projectModel.get(projectModel.count-1).rowId
             var res
             db.transaction( function(tx) {
-                res = tx.executeSql('INSERT INTO TRACK(comment, start) VALUES(?, ?)', [track.comment, track.start])
+                res = tx.executeSql('INSERT INTO TRACK(comment, projectid, start, end) VALUES(?, ?, ?, ?)',
+                                    [track.comment, track.projectRowId, track.start, track.end])
                 track.rowId = parseInt(res.insertId)
             })
-            trackModel.append(track)
-            return trackModel.count - 1
+            trackModel.insert(0, track)
+            return 0
         }
 
         //remove track in trackModel by given index
@@ -172,7 +182,7 @@ Item {
             var success
             db.transaction(function(tx){
                 var res = tx.executeSql('UPDATE TRACK SET comment = ?, start = ?, end = ?, projectid = ? WHERE id = ?',
-                                        [track.comment, track.start, track.end, track.projectRowId])
+                                        [track.comment, track.start, track.end, track.projectRowId, track.rowId])
                 success = res.rowsAffected > 0
             });
             return success
