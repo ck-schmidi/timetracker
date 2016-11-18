@@ -28,6 +28,9 @@ App {
         NavigationItem{
             title: qsTr("Reports")
             icon: IconType.file
+            NavigationStack{
+                ReportsPage{}
+            }
         }
     }
 }
