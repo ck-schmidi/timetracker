@@ -195,7 +195,7 @@ ListPage{
                 if(!project){ return "";}
                 return "Project: %1".arg(project.name)
             }
-            detailText: "%1 (%2)".arg(Helpers.formatDate(model.start)).arg(model.comment)
+            detailText: "%1 - %2".arg(Helpers.formatDate(model.start)).arg(Helpers.formatDate((model.end)))
             onSelected: appListView.switchTo(index)
         }
 
