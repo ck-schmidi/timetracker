@@ -144,8 +144,16 @@ Item {
             track.comment = track.comment !== undefined ? track.comment : ""
             //set the starttime to the current date
             track.start = new Date(Date.now())
-            track.end = new Date(0)
-            track.projectRowId = projectModel.get(projectModel.count-1).rowId
+            track.end = new Date(Date.now())
+
+            var lastProject = projectModel.get(projectModel.count - 1)
+            if (lastProject){
+                track.projectRowId = lastProject.rowId
+            }
+            else{
+                track.projectRowId = -1
+            }
+
             var res
             db.transaction( function(tx) {
                 res = tx.executeSql('INSERT INTO TRACK(comment, projectid, start, end) VALUES(?, ?, ?, ?)',
@@ -187,6 +195,20 @@ Item {
             });
             return success
         }
+    }
+
+    function getReport(projectRowId){
+        var result
+        db.transaction(function(tx){
+            result = tx.executeSql('SELECT strftime("%W", START) AS week, ROUND(SUM(((julianday(END) - julianday(START))*24)), 2) as result FROM TRACK WHERE projectid = ? GROUP BY WEEK',
+                                   [projectRowId])
+        });
+        var report = []
+        for(var i = 0; i < result.rows.length; i++){
+            var item = result.rows.item(i)
+            report = report.concat(item)
+        }
+        return report
     }
 
     Component.onCompleted: {
