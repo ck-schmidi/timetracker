@@ -12,6 +12,11 @@ ListPage{
     id: trackingsPage
     title: qsTr("Trackings")
 
+    /* This view shows a calendar and a datepicker
+       It is intialized with a date and a callback-function.
+       The callback function is called whenever a date or time
+       has been changed
+    */
     Component{
         id: dateTimePickerView
 
@@ -71,6 +76,15 @@ ListPage{
         }
 
     }
+
+    /* This view shows the detail-page for a certain
+      entry:
+      - project
+      - start
+      - endtime
+
+      by click of any of the datetime the dateTimePickerView get shown
+    */
 
     Component{
         id: detailView

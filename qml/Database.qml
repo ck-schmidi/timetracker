@@ -97,6 +97,7 @@ Item {
             return success
         }
 
+        /* returns the project by given rowId */
         function getProjectByRowId(rowId){
             var index = getIndexByRowId(rowId)
             if(index === -1)
@@ -104,6 +105,7 @@ Item {
             return projectModel.get(index)
         }
 
+        /* returns the model-index by a given rowId */
         function getIndexByRowId(rowId){
             for(var i = 0; i < projectModel.count; i++){
                 var project = projectModel.get(i)
@@ -197,6 +199,7 @@ Item {
         }
     }
 
+    /* creates the report by suming of all trackings per week */
     function getReport(projectRowId){
         var result
         db.transaction(function(tx){
@@ -211,6 +214,7 @@ Item {
         return report
     }
 
+    /* initialize database and populate models */
     Component.onCompleted: {
         database.init()
         database.projectDao.populate()

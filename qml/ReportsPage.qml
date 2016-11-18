@@ -8,6 +8,9 @@ import "components"
 ListPage {
     id: reportPage
     title: qsTr("Create report")
+
+    /* Shows the report-result,
+      gets paramaterized by projectName and reportModel */
     Component {
         id: reportResult
         Page {
@@ -73,6 +76,7 @@ ListPage {
             width: col.width - 2 * col.spacing
         }
 
+        /* button for starting the reporting */
         AppButton{
             text: qsTr("show report")
             onClicked: {
