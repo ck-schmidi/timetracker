@@ -5,7 +5,6 @@
   <title>Simple Timetracker Tutorial | Qt </title>
 </head>
 <body>
-<li>Simple Timetracker Tutorial</li>
 <div class="sidebar">
 <div class="toc">
 <h3><a name="toc">Contents</a></h3>
@@ -16,6 +15,7 @@
 <li class="level1"><a href="#database">Database</a></li>
 <li class="level1"><a href="#screen-projectspage">Screen ProjectsPage</a></li>
 <li class="level1"><a href="#screen-trackingspage">Screen TrackingsPage</a></li>
+<li class="level1"><a href="#reportspage">ReportsPage</a></li>
 </ul>
 </div>
 <div class="sidebar-content" id="sidebar-content"></div></div>
@@ -845,6 +845,8 @@ Component{
         navigationStack<span class="operator">.</span>push(dateTimePickerView<span class="operator">,</span> {date: date<span class="operator">,</span> callback: callback})
     }
 }</pre>
+<a name="reportspage"></a>
+<h2 id="reportspage">ReportsPage</h2>
 <p>In the last part of our tutorial we'll build a simple Report-View which sums up our worked hours per week.</p>
 <p>It should look like:</p>
 <p class="centerAlign"><img src="images/report.png" alt="" /></p><p>where we can select a project, the result page should look like:</p>

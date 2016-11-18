@@ -1130,6 +1130,8 @@
 
     \endcode
 
+    \section1 ReportsPage
+
     In the last part of our tutorial we'll build a simple Report-View which sums up our worked hours
     per week.
 
