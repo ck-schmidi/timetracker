@@ -35,11 +35,11 @@
 
     So we want to end up with something like this:
 
-    # add screenshot
+    \image navigation.png
 
     Now, let's dive into some code. Open the file \c{qml/Main.qml}
 
-    For top-level navigation we use the V-Play component \c Navigation. \c Navigation is
+    For top-level navigation we use the V-Play component \c Navigation. \c Navigation
     renders platform-specific, for example if you are on Android it renders a Drawer-based
     navigation. In iOS its a tab-based navigation.
 
@@ -71,9 +71,7 @@
     }
     \endcode
 
-    If we \b {Build an Run} or project we should see the top-level-navigation of our
-    application.
-
+    If we \b {Build an Run} our project we should see the top-level-navigation of our application.
 
     \section1 Database
     Before we get into programming our different screens, we should talk about the datastructures
@@ -110,6 +108,9 @@
        \li \c{save(index)}: \e{(saves an item from the model by given index)}
     \endlist
 
+    For our \c{projectDao} we will implement also two helper functions for finding projects
+    by their rowId
+
     The base structure of this component should look like:
 
     \code
@@ -128,6 +129,8 @@
             function append(project){}
             function remove(modelIndex){}
             function save(modelIndex){}
+            function getIndexByRowId(rowId){}
+            function getProjectByRowId(rowId){}
         }
 
         property var trackDao: QtObject{
@@ -155,7 +158,7 @@
     \endlist
 
     For setting up our database connection we use the function \c{openDataBaseSync(…)} from
-    the LocalStorage QML-componentAfter setting the connection up, we execute the create-statement
+    the LocalStorage QML-component. After setting the connection up, we execute the create-statement
     for our database. You should use the 'IF NOT EXISTS'-clause on the create-statements, then the
     statement is only executed on the first startup of the application.
 
@@ -249,7 +252,7 @@
     \endcode
 
 
-    In the last step of the \c{projectDao} implementation we implement to \c{save} function.
+    In the next step of the \c{projectDao} implementation we implement the \c{save} function.
 
     \list
         \li similar to the remove-function we first get the project from the model with the given index
@@ -270,6 +273,34 @@
     \endcode
 
 
+    In the next step of the \c{projectDao} we'll implement our two helper functions
+
+    \list
+        \li getIndexByRowId simply iterates all projects from the projectModel and return the index of the rowId matches
+        \li getProjectByRowId uses this function and just returns the project behind the found index
+    \endlist
+
+    \code
+
+    function getIndexByRowId(rowId){
+        for(var i = 0; i < projectModel.count; i++){
+        var project = projectModel.get(i)
+        if(project.rowId === rowId)
+            return i
+        }
+        return -1
+    }
+
+    function getProjectByRowId(rowId){
+        var index = getIndexByRowId(rowId)
+        if(index === -1)
+            return undefined;
+        return projectModel.get(index)
+    }
+
+    \endcode
+
+
    The DAO-Code for the trackDao is pretty similar to the projectModel.
    I'll outline the main differences, but I won't go into every function explicitly.
 
@@ -278,6 +309,7 @@
 
    \list
        \li {In the function populate() we also save the projectRowId as our foreign-key}
+       \li {Our append function sets the default values for start, end and project(selects the last created project)}
    \endlist
 
     \code
@@ -300,18 +332,27 @@
             return true;
         }
 
-        //append new track to trackModel
         function append(track){
             track.comment = track.comment !== undefined ? track.comment : ""
-            track.start = Date.now()
-            track.projectRowId = track.projectRowId !== undefined ? track.projectRowId : ""
+            track.start = new Date(Date.now())
+            track.end = new Date(Date.now())
+
+            var lastProject = projectModel.get(projectModel.count - 1)
+            if (lastProject){
+                track.projectRowId = lastProject.rowId
+            }
+            else{
+                track.projectRowId = -1
+            }
+
             var res
             db.transaction( function(tx) {
-                res = tx.executeSql('INSERT INTO TRACK(comment, start) VALUES(?, ?)', [track.comment, track.start])
+                res = tx.executeSql('INSERT INTO TRACK(comment, projectid, start, end) VALUES(?, ?, ?, ?)',
+                                    [track.comment, track.projectRowId, track.start, track.end])
                 track.rowId = parseInt(res.insertId)
             })
-            trackModel.append(track)
-            return trackModel.count - 1
+            trackModel.insert(0, track)
+            return 0
         }
 
         function remove(modelIndex){
@@ -347,11 +388,14 @@
     We want to have a screen, where we can Add, Modify and Delete projects.
     When we go to the screen it should look like:
 
-    # todo insert screenshot
+    \image projects.png 
+
     Let's create an empty QML-Component \c{ProjectsPage.qml} for our visual implementation.
 
     After creating the new qml-file lets use it in our \c{Main.qml} component within a \c{NavigationStack} (needed
     for our Detail-Page)
+
+    \image projects_details.png 
 
     \code
         ...
@@ -534,6 +578,17 @@
 
     In the first step we add a \c{Column} container for providing all our labels and textfields:
 
+    For our Labels we create a new component \c{AppTextFieldLabel.qml} in a new folder \c{components} for preventing code-replication:
+
+    \code
+
+    AppText{
+        font.pixelSize: sp(10)
+        color: "grey"
+    }
+
+    \endcode
+
     We use the VPlay-App components \c{AppText} and \c{AppTextField} for the labels and textfields:
 
     \code
@@ -546,28 +601,30 @@
                 topPadding: dp(15)
                 padding: dp(5)
 
-                AppText{
+                AppTextFieldLabel{
                     id: projectNameLabel
                     text: qsTr("Project Name:")
-                    font.pixelSize: sp(10)
-                    color: "grey"
+                    width: col.width - 2 * col.spacing
                 }
 
                 AppTextField{
                     id: projectNameTextField
                     text:  project ? project.name : ""
+                    width: col.width - 2 * col.spacing
+                    onTextChanged: saveTimer.restart()
                 }
 
-                AppText{
+                AppTextFieldLabel{
                     id: projectDescriptionLabel
                     text: qsTr("Project Description:")
-                    font.pixelSize: sp(10)
-                    color: "grey"
+                    width: col.width - 2 * col.spacing
                 }
 
                 AppTextField{
                     id: projectDescriptionTextField
                     text:  project ? project.description: ""
+                    width: col.width - 2 * col.spacing
+                    onTextChanged: saveTimer.restart()
                 }
             }
             ...
@@ -601,7 +658,7 @@
         }
     \endcode
 
-    we need to call this functions when our texts in the textfields gets changed
+    We need to call this functions when our texts in the textfields gets changed
 
     \code
 
@@ -621,10 +678,9 @@
 
     Our last task for the Project-Detail-View is adding a delete button:
 
-    In this case we create a new folder components with a new QML-Component-File
-    \c{DeleteButton.qml} which encapsulates our DeleteButton. We use the \c{AppButton}
-    component from V-Play-Apps with a remove-icon and text "delete" and some appropriate
-    colors.
+    In this case we create a new component \c{DeleteButton.qml} which encapsulates
+    our DeleteButton. We use the \c{AppButton} component from V-Play-Apps with a
+    remove-icon and text "delete" and some appropriate colors.
 
     \code
     AppButton{
@@ -665,14 +721,24 @@
     \c{TrackingsPage} is pretty similar to \c{ProjectsPage}. It contains a \c{ListView} with
     all trackings, an Add-Button and a DetailView.
 
+    It should look like:
+
+    \image trackings.png
+
+    with a detail screen:
+
+    \image trackings_detail.png
+
+    and a Date/Time-picker screen for changing date and time
+
+    \image datetimepicker.png
+
+
     Let's create a QML-component \c{TrackingsPage.qml}
 
     Again, I won't go too much into the details, because its very similar to the ProjectsPage.
     Instead of opening a Dialog when clicking the "+"-Button, we directly append a new track
     to the model and switch to the DetailView for editing.
-
-
-    # todo: explain getProjectByRowId(...)
 
     \code
 
@@ -1059,6 +1125,175 @@
 
         function switchToDateTimePickerView(date, callback){
             navigationStack.push(dateTimePickerView, {date: date, callback: callback})
+        }
+    }
+
+    \endcode
+
+    In the last part of our tutorial we'll build a simple Report-View which sums up our worked hours
+    per week.
+
+    It should look like:
+
+    \image report.png
+
+    where we can select a project, the result page should look like:
+
+    \image report_detail.png
+
+    Let's create a new QML-File \c{ReportsPage.qml} and integrate it in \c{Main.qml} (the same way as
+    \c{ProjectsPage.qml} and \c{TrackingsPage.qml}}
+
+
+    Let's add some content:
+
+    Again we use \c{ListPage} as our toplevel-component.
+
+    \list
+        \li Add new Component reportResult which contains a simple Page with two paramaters (string projectName, var reportModel
+        \li Add a Column for our Report-Form
+        \li Add a QtQuickControls2 ComboBox and an AppButton for selecting a project and start the reporting
+    \endlist
+
+
+    \code
+
+    ListPage {
+        id: reportPage
+        title: qsTr("Create report")
+
+        Component {
+            id: reportResult
+            Page {
+                id: page
+                title: qsTr("Result")
+
+                property string projectName
+                property var reportModel
+            }
+        }
+
+        Column{
+            id: col
+            anchors.fill: parent
+            padding: dp(5)
+            spacing: dp(5)
+
+            QQC2.ComboBox{
+                id: projectComboBox
+                textRole: "name"
+                model: database.projectModel
+                width: col.width - 2 * col.spacing
+            }
+
+            AppButton{
+                text: qsTr("show report")
+            }
+        }
+    }
+
+    \endcode
+
+    For our reporting we need some functionality for extracting our report.
+
+    Let's go to \c{Database.qml} and add a function \c{getReport(...)}.
+    In our function we again open an new database-transaction and execute a sql-statement which
+    takes the sum over the difference of end and start and groups ther results per week.
+
+    After executing the statement we iterate the result and bring the result in a form, that is
+    nice to use for iterating in QML.
+
+    \code
+
+    Item {
+        id: database
+        ...
+        function getReport(projectRowId){
+            var result
+            db.transaction(function(tx){
+                result = tx.executeSql('SELECT strftime("%W", START) AS week, ROUND(SUM(((julianday(END) - julianday(START))*24)), 2) as result FROM TRACK WHERE projectid = ? GROUP BY WEEK',
+                       [projectRowId])
+            });
+            var report = []
+            for(var i = 0; i < result.rows.length; i++){
+                var item = result.rows.item(i)
+                report = report.concat(item)
+            }
+            return report
+        }
+        ...
+    }
+
+    \endcode
+
+    Now we have the functionality for creating report for a certain project.
+    Lets integrate it to our views.
+
+    So lets modify our \c{Component} "pageResult"
+
+    \list
+
+    \li We start by adding a Column to our \c{Page}
+    \li In this column we add a row with a Label and an AppText (text is set to our component-parameter projectName
+    \li For showing the results of our report we place another Column in our Column
+    \li In a repeater we iterate over our reportModel
+    \li Inside our Repeater we again add a Row for placing the label for the calendar-week and the
+        computed result from our function we wrote before
+
+    \endlist
+
+
+    \code
+
+    Component {
+        id: reportResult
+        Page {
+            id: page
+            title: qsTr("Result")
+
+            property string projectName
+            property var reportModel
+
+            Column{
+                id: col
+                anchors.fill: parent
+                padding: dp(10)
+                spacing: dp(10)
+
+                Row{
+                    spacing: dp(5)
+                    AppTextFieldLabel{
+                        id: projectNameTextLabel
+                        text: qsTr("Project Name:")
+                    }
+
+                    AppText{
+                        id: projectNameText
+                        text: projectName
+                        anchors.baseline: projectNameTextLabel.baseline
+                    }
+                }
+
+                Column{
+                    spacing: dp(7)
+                    Repeater{
+                        model: reportModel ? reportModel : 0
+                        Row{
+                            spacing: dp(5)
+                            AppTextFieldLabel{
+                                id: calendarWeekText
+                                text: "KW"+ modelData.week + ":"
+                            }
+
+                            AppText{
+                                id: weekTotalText
+                                text: modelData.result + "h"
+                                anchors.baseline: calendarWeekText.baseline
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
